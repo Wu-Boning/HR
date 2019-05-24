@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <title>HR</title>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+
+    <!--axios HTTP client AJAX 操作  -->
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+
+    <style>
+        td,
+        th {
+            vertical-align: middle;
+            text-align: center;
+        }
+    </style>
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+        integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+</head>
+
+<body>
+    <div id="app">
+        <!--标题-->
+        <div class="jumbotron bg-success text-light">
+            <h1 class="display-5">人力资源管理</h1>
+            <p class="lead">吴泊宁</p>
+        </div>
+        <!--主体-->
+        <div class="container-fluid">
+            <div class="row">
+                <!--输入表单-->
+                <div class="col-lg-4 col-sm-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <h4 class="card-title">员工信息</h4>
+                            <!--输入框-->
+                            <div class="form-group">
+                                <label for="">姓名</label>
+                                <input type="text" class="form-control form-control-lg" v-model="name" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="">职位</label>
+                                <select class="form-control form-control-lg" v-model="job">
+                                    <option>研发</option>
+                                    <option>产品</option>
+                                    <option>测试</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="">性别</label>
+                                <div class="form-control form-control-lg">
+                                    <div class="form-check form-check-inline">
+                                        <label class="form-check-label">
+                                            <input type="radio" class="form-check-input" name="gender" value="M"
+                                                v-model="gender">
+                                            男
+                                        </label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <label class="form-check-label">
+                                            <input type="radio" class="form-check-input" name="gender" value="F"
+                                                v-model="gender">
+                                            女
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <!--按钮-->
+                            <button type="button" class="btn btn-primary btn-lg btn-block" @click="create()">创建</button>
+                        </div>
+                    </div>
+                </div>
+                <!--表格-->
+                <div class="col-lg-8 col-sm-12">
+                    <table class="table table-bordered text-center table-hover">
+                        <thead>
+                            <tr>
+                                <th>编号</th>
+                                <th>姓名</th>
+                                <th>职位</th>
+                                <th>性别</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="(staff, index) in staffs" v-if="isEditting && staff.id == staffEdit.id">
+                                <td>{{staff.id}}</td>
+                                <td><input v-model="staffEdit.name"></td>
+                                <td>
+                                    <div class="form-group">
+                                      <select class="form-control" v-model="staffEdit.job">
+                                        <option>研发</option>
+                                        <option>产品</option>
+                                        <option>测试</option>
+                                        <option>实施</option>
+                                      </select>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="form-group">
+                                      <select class="form-control" v-model="staffEdit.gender">
+                                        <option value="M">男</option>
+                                        <option value="F">女</option>
+                                      </select>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="row">
+                                        <div class="col-sm-12 col-lg-6">
+                                            <button type="button" class="btn btn-success btn-block"
+                                                @click="update()">更新</button>
+                                        </div>
+                                        <div class="col-sm-12 col-lg-6">
+                                            <button type="button" class="btn btn-danger btn-block"
+                                                @click="del(index)">删除</button>
+                                        </div>
+
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr v-else>
+                                <td>{{staff.id}}</td>
+                                <td>{{staff.name}}</td>
+                                <td>{{staff.job}}</td>
+                                <td>{{staff.gender == 'M' ? '男':'女'}}</td>
+                                <td>
+                                    <div class="row">
+                                        <div class="col-sm-12 col-lg-6">
+                                            <button type="button" class="btn btn-primary btn-block"
+                                                @click="edit(staff.id)">编辑</button>
+                                        </div>
+                                        <div class="col-sm-12 col-lg-6">
+                                            <button type="button" class="btn btn-danger btn-block"
+                                                @click="del(index)">删除</button>
+                                        </div>
+    
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <!--分页-->
+                    <nav aria-label="Page navigation example">
+                        <ul class="pagination justify-content-center">
+                            <li class="page-item" v-bind:class="{disabled:ifFirst}">
+                                <a class="page-link" @click="turnToPage(1)" aria-label="Previous">
+                                    <span aria-hidden="true">&laquo;</span>
+                                    <span class="sr-only">Previous</span>
+                                </a>
+                            </li>
+                            <div v-for="page in pages">
+                                <li class="page-item active" v-if="page == pageNum">
+                                    <a class="page-link" @click="turnToPage(page)">{{page}}<span class="sr-only">(current)</span></a>
+                                </li>
+                                <li class="page-item" v-else>
+                                    <a class="page-link" @click="turnToPage(page)">{{page}}</span></a>
+                                </li>
+                            </div>
+                            <li class="page-item" :class="{disabled:isLast}">
+                                <a class="page-link" @click="turnToPage(pages)" aria-label="Next">
+                                    <span aria-hidden="true">&raquo;</span>
+                                    <span class="sr-only">Next</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            
+        
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        new Vue({
+            el: '#app',
+            data: {
+                staffs: [],
+                name: '',
+                job: '研发',
+                gender: '',
+                pageNum: 1,
+                pages: 0,
+                ifFirst: true,
+                isLast: false,
+                onePageSize: 6,
+                staffEdit:undefined,
+                isEditting:false,
+            },
+            computed: {
+
+            },
+            methods: {
+                create: function () {
+                    console.log(`${this.name},${this.job},${this.gender}`);
+                    //网络请求 JS 异步请求
+                    axios.post('/api/v1/staff', {
+                        name: this.name,
+                        job: this.job,
+                        gender: this.gender
+                    })
+                        .then(res => {
+                            console.log(res);
+                            this.getStaffs();
+                        })
+                        .catch(err => {
+                            console.error(err);
+                        })
+                },
+                getStaffs: function () {
+                    let start = this.onePageSize * (this.pageNum - 1);
+                    
+                    axios.get(`/api/v1/staff`,{
+                        params:{
+                            start: start,
+                            size: this.onePageSize
+                        }
+                        })
+                        .then(res => {
+                            console.log(res.data);
+                            this.staffs = res.data.staffs;
+                            this.pages = Math.ceil(res.data.count / this.onePageSize);
+                        })
+                        .catch(err => {
+                            console.error(err);
+                        })
+                },
+                /*getStaff:function(n){
+                    axios.get(`/api/v1/staff/find/${n}`)
+                    .then(res => {
+                        console.log(res)
+                        this.staffEdit = res.data;
+                    })
+                    .catch(err => {
+                        console.error(err); 
+                    })
+                },*/
+                del: function (n) {
+                    let id = this.staffs[n].id;
+                    console.log(id);
+                    let path = '/api/v1/staff/delete/' + id;
+                    axios.delete(path, {
+                        id: id
+                    })
+                        .then(res => {
+                            console.log(res)
+                            this.getStaffs();
+                        })
+                        .catch(err => {
+                            console.error(err);
+                        });
+                },
+                edit:function(n){
+                    //注意：异步执行，只有当服务器相应后，then中的方法才回执行。之前代码会往后执行
+                    axios.get(`/api/v1/staff/find/${n}`)
+                    .then(res => {
+                        console.log(res.data)
+                        this.staffEdit = res.data;
+                        this.isEditting=true;
+                    })
+                    .catch(err => {
+                        console.error(err); 
+                    })
+                    
+
+                },
+                turnToPage: function (n) {
+                    this.pageNum = n;
+                    this.getStaffs();
+                    n == 1 ? this.ifFirst = true : this.ifFirst = false;
+                    n == this.pages ? this.isLast = true : this.isLast = false;
+                },
+                update:function(){
+                    axios.post('/api/v1/staff/update',this.staffEdit)
+                    .then(res => {
+                        console.log(res)
+                        this.isEditting=false;
+                        this.getStaffs(); 
+                    })
+                    .catch(err => {
+                        console.error(err); 
+                    })
+                },
+            },
+            mounted() {
+                //挂载（初始化）
+                //发送网络请求
+                this.getStaffs();
+            }
+        })
+    </script>
+
+
+
+
+
+
+    <!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
+        integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
+        crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
+        integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
+        crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
+        integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
+        crossorigin="anonymous"></script>
+</body>
+
+</html>
